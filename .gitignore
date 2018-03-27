@@ -8,4 +8,8 @@ afl-gcc
 afl-gotcpu
 afl-showmap
 afl-tmin
+afl-clang-fast
+afl-clang-fast++
 as
+*.o
+*.so

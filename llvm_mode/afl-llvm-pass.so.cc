@@ -480,7 +480,7 @@ bool AFLCoverage::runOnModule(Module &M) {
 
               /* Find distance for BB */
 
-              if (AFL_R(100) < dinst_ratio) {
+              if (FOT_R(100) < dinst_ratio) {
                 std::map<std::string,int>::iterator it;
                 for (it = bb_to_dis.begin(); it != bb_to_dis.end(); ++it)
                   if (it->first.compare(bb_name) == 0)
@@ -497,11 +497,11 @@ bool AFLCoverage::runOnModule(Module &M) {
         BasicBlock::iterator IP = BB.getFirstInsertionPt();
         IRBuilder<> IRB(&(*IP));
 
-        if (AFL_R(100) >= inst_ratio) continue;
+        if (FOT_R(100) >= inst_ratio) continue;
 
         /* Make up cur_loc */
 
-        unsigned int cur_loc = AFL_R(MAP_SIZE);
+        unsigned int cur_loc = FOT_R(MAP_SIZE);
 
         ConstantInt *CurLoc = ConstantInt::get(Int32Ty, cur_loc);
 

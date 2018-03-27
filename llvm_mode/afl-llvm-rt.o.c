@@ -34,7 +34,7 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 
-#ifdef AFLGO_TRACING
+#ifdef FOTGO_TRACING
 #include "../hash.h"
 #include "../hashset.h"
 #include <assert.h>
@@ -47,7 +47,7 @@ static char edgeStr[1024];
 static const unsigned int prime_1 = 73;
 static const unsigned int prime_2 = 5009;
 /* End of profiling variables */
-#endif /* ^AFLGO_TRACING */
+#endif /* ^FOTGO_TRACING */
 
 
 /* This is a somewhat ugly hack for the experimental 'trace-pc-guard' mode.
@@ -82,7 +82,7 @@ static void __afl_map_shm(void) {
 
   u8 *id_str = getenv(SHM_ENV_VAR);
 
-  /* If we're running under AFL, attach to the appropriate region, replacing the
+  /* If we're running under FOT, attach to the appropriate region, replacing the
      early-stage __afl_area_initial region that is needed to allow some really
      hacky .init code to work correctly in projects such as OpenSSL. */
 
@@ -96,7 +96,7 @@ static void __afl_map_shm(void) {
 
     if (__afl_area_ptr == (void *)-1) _exit(1);
 
-    /* Write something into the bitmap so that even with low AFL_INST_RATIO,
+    /* Write something into the bitmap so that even with low FOT_INST_RATIO,
        our parent doesn't give up on us. */
 
     __afl_area_ptr[0] = 1;
@@ -152,7 +152,7 @@ static void __afl_start_forkserver(void) {
         close(FORKSRV_FD);
         close(FORKSRV_FD + 1);
         return;
-  
+
       }
 
     } else {
@@ -196,7 +196,7 @@ int __afl_persistent_loop(unsigned int max_cnt) {
 
   if (first_pass) {
 
-    /* Make sure that every iteration of __AFL_LOOP() starts with a clean slate.
+    /* Make sure that every iteration of __FOT_LOOP() starts with a clean slate.
        On subsequent calls, the parent will take care of that, but on the first
        iteration, it's our job to erase any trace of whatever happened
        before the loop. */
@@ -227,7 +227,7 @@ int __afl_persistent_loop(unsigned int max_cnt) {
 
     } else {
 
-      /* When exiting __AFL_LOOP(), make sure that the subsequent code that
+      /* When exiting __FOT_LOOP(), make sure that the subsequent code that
          follows the loop is not traced. We do that by pivoting back to the
          dummy output region. */
 
@@ -296,11 +296,11 @@ void __sanitizer_cov_trace_pc_guard_init(uint32_t* start, uint32_t* stop) {
 
   if (start == stop || *start) return;
 
-  x = getenv("AFL_INST_RATIO");
+  x = getenv("FOT_INST_RATIO");
   if (x) inst_ratio = atoi(x);
 
   if (!inst_ratio || inst_ratio > 100) {
-    fprintf(stderr, "[-] ERROR: Invalid AFL_INST_RATIO (must be 1-100).\n");
+    fprintf(stderr, "[-] ERROR: Invalid FOT_INST_RATIO (must be 1-100).\n");
     abort();
   }
 
@@ -308,11 +308,11 @@ void __sanitizer_cov_trace_pc_guard_init(uint32_t* start, uint32_t* stop) {
      to avoid duplicate calls (which can happen as an artifact of the underlying
      implementation in LLVM). */
 
-  *(start++) = R(MAP_SIZE - 1) + 1;
+  *(start++) = FOT_R(MAP_SIZE - 1) + 1;
 
   while (start < stop) {
 
-    if (R(100) < inst_ratio) *start = R(MAP_SIZE - 1) + 1;
+    if (FOT_R(100) < inst_ratio) *start = FOT_R(MAP_SIZE - 1) + 1;
     else *start = 0;
 
     start++;
@@ -322,7 +322,7 @@ void __sanitizer_cov_trace_pc_guard_init(uint32_t* start, uint32_t* stop) {
 }
 
 
-#ifdef AFLGO_TRACING
+#ifdef FOTGO_TRACING
 /* Hashset implementation for C */
 hashset_t hashset_create()
 {
@@ -467,8 +467,8 @@ void llvm_profiling_call(const char* bbname)
 void llvm_profiling_call(const char* bbname) {
     if (filefd != NULL) {
         writeBB(bbname);
-    } else if (getenv("AFLGO_PROFILER_FILE")) {
-        filefd = fopen(getenv("AFLGO_PROFILER_FILE"), "a+");
+    } else if (getenv("FOTGO_PROFILER_FILE")) {
+        filefd = fopen(getenv("FOTGO_PROFILER_FILE"), "a+");
         if (filefd != NULL) {
             strcpy(edgeStr, "START");
             edgeSet = hashset_create();
@@ -477,4 +477,4 @@ void llvm_profiling_call(const char* bbname) {
         }
     }
 }
-#endif /* ^AFLGO_TRACING */
+#endif /* ^FOTGO_TRACING */

@@ -264,19 +264,19 @@
 
 /* Environment variable used to pass SHM ID to the called program. */
 
-#define SHM_ENV_VAR         "__AFL_SHM_ID"
+#define SHM_ENV_VAR         "__FOT_SHM_ID"
 
 /* Other less interesting, internal-only variables. */
 
-#define CLANG_ENV_VAR       "__AFL_CLANG_MODE"
-#define AS_LOOP_ENV_VAR     "__AFL_AS_LOOPCHECK"
-#define PERSIST_ENV_VAR     "__AFL_PERSISTENT"
-#define DEFER_ENV_VAR       "__AFL_DEFER_FORKSRV"
+#define CLANG_ENV_VAR       "__FOT_CLANG_MODE"
+#define AS_LOOP_ENV_VAR     "__FOT_AS_LOOPCHECK"
+#define PERSIST_ENV_VAR     "__FOT_PERSISTENT"
+#define DEFER_ENV_VAR       "__FOT_DEFER_FORKSRV"
 
 /* In-code signatures for deferred and persistent mode. */
 
-#define PERSIST_SIG         "##SIG_AFL_PERSISTENT##"
-#define DEFER_SIG           "##SIG_AFL_DEFER_FORKSRV##"
+#define PERSIST_SIG         "##SIG_FOT_PERSISTENT##"
+#define DEFER_SIG           "##SIG_FOT_DEFER_FORKSRV##"
 
 /* Distinctive bitmap signature used to indicate failed execution: */
 
@@ -309,7 +309,7 @@
 
 /* Map size for the traced binary (2^MAP_SIZE_POW2). Must be greater than
    2; you probably want to keep it under 18 or so for performance reasons
-   (adjusting AFL_INST_RATIO when compiling is probably a better way to solve
+   (adjusting FOT_INST_RATIO when compiling is probably a better way to solve
    problems with complex programs). You need to recompile the target binary
    after changing this - otherwise, SEGVs may ensue. */
 
@@ -352,10 +352,10 @@
 /* This enables tracing of the executed CG and CFG edges. In some cases, 
    the CG and CFGs are that LLVM produces are incomplete due to register-
    indirect jumps or calls. To add edges use script/add_edges.py. Don't
-   forget to set environment variable AFLGO_PROFILER_FILE.
+   forget to set environment variable FOTGO_PROFILER_FILE.
    
-   $ export AFLGO_PROFILER_FILE=<your-file> */
+   $ export FOTGO_PROFILER_FILE=<your-file> */
    
-//#define AFLGO_TRACING
+//#define FOTGO_TRACING
 
 #endif /* ! _HAVE_CONFIG_H */
