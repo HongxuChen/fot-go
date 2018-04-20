@@ -22,7 +22,7 @@
 
  */
 
-#define AFL_LLVM_PASS
+#define FOT_LLVM_PASS
 
 #include "../config.h"
 #include "../debug.h"
@@ -161,7 +161,7 @@ bool AFLCoverage::runOnModule(Module &M) {
 
   char be_quiet = 0;
 
-  if (isatty(2) && !getenv("AFL_QUIET")) {
+  if (isatty(2) && !getenv("FOT_QUIET")) {
 
     if (is_aflgo || is_aflgo_preprocessing)
       SAYF(cCYA "aflgo-llvm-pass (yeah!) " cBRI VERSION cRST " (%s mode)\n",
@@ -174,14 +174,14 @@ bool AFLCoverage::runOnModule(Module &M) {
 
   /* Decide instrumentation ratio */
 
-  char* inst_ratio_str = getenv("AFL_INST_RATIO");
+  char* inst_ratio_str = getenv("FOT_INST_RATIO");
   unsigned int inst_ratio = 100;
 
   if (inst_ratio_str) {
 
     if (sscanf(inst_ratio_str, "%u", &inst_ratio) != 1 || !inst_ratio ||
         inst_ratio > 100)
-      FATAL("Bad value of AFL_INST_RATIO (must be between 1 and 100)");
+      FATAL("Bad value of FOT_INST_RATIO (must be between 1 and 100)");
 
   }
 
@@ -591,9 +591,9 @@ bool AFLCoverage::runOnModule(Module &M) {
     if (!inst_blocks) WARNF("No instrumentation targets found.");
     else OKF("Instrumented %u locations (%s mode, ratio %u%%, dist. ratio %u%%).",
              inst_blocks,
-             getenv("AFL_HARDEN")
+             getenv("FOT_HARDEN")
              ? "hardened"
-             : ((getenv("AFL_USE_ASAN") || getenv("AFL_USE_MSAN"))
+             : ((getenv("FOT_USE_ASAN") || getenv("FOT_USE_MSAN"))
                ? "ASAN/MSAN" : "non-hardened"),
              inst_ratio, dinst_ratio);
 
