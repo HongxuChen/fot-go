@@ -2,6 +2,7 @@
 import argparse
 import networkx as nx
 import re
+from time import sleep
 
 #Regular expression to find callee
 pattern = re.compile('@.*?\(')
@@ -73,9 +74,13 @@ if __name__ == '__main__':
 
   args = parser.parse_args ()
 
-  print ("\nParsing %s .." % args.dot)
+  print("="*80)
+
+  print ("\n[BOTH] Parsing %s .." % args.dot)
   G = nx.DiGraph(nx.drawing.nx_pydot.read_dot(args.dot))
-  print (nx.info(G))
+  print(nx.info(G))
+  for node in G.nodes(data=True):
+      print(node)
 
   is_cg = 1 if "Name: Call graph" in nx.info(G) else 0
   print ("\nWorking in %s mode.." % ("CG" if is_cg else "CFG"))
@@ -98,13 +103,14 @@ if __name__ == '__main__':
 
       caller = args.dot.split(".")
       caller = caller[len(caller)-2]
-      print ("Loading cg_distance for function '%s'.." % caller)
 
+      print("[cfg] Loading cg_distance({}) for '{}'..".format(args.cg_distance, caller))
       with open(args.cg_distance, 'r') as f:
         for l in f.readlines():
           s = l.strip().split(",")
           cg_distance[s[0]] = float(s[1])
 
+      print("[cfg] BBCalls: {}".format(args.cg_callsites))
       with open(args.cg_callsites, 'r') as f:
         for l in f.readlines():
           s = l.strip().split(",")
@@ -116,7 +122,7 @@ if __name__ == '__main__':
               else:
                 bb_distance[s[0]] = cg_distance[s[1]]
 
-      print ("Adding target BBs (if any)..")
+      print ("[BOTH] Adding target BBs (if any): {}".format(args.targets))
       with open(args.targets, "r") as f:
         for l in f.readlines ():
           s = l.strip().split("/");
@@ -129,7 +135,7 @@ if __name__ == '__main__':
   # Process as CallGraph
   else:
 
-    print ("Loading targets..")
+    print("[CG] Loading targets.. {}".format(args.targets))
     with open(args.targets, "r") as f:
       targets = []
       for line in f.readlines ():
@@ -141,7 +147,7 @@ if __name__ == '__main__':
       print ("No targets available")
       exit(1)
 
-  print ("Calculating distance..")
+  print("[BOTH] Calculating distance.. {}".format(args.names))
   with open(args.out, "w") as out:
     with open(args.names, "r") as f:
       for line in f.readlines():

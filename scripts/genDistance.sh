@@ -61,7 +61,7 @@ if [ $RESUME -le $STEP ]; then
     for binary in $(echo "$binaries"); do
 
       echo "($STEP) Constructing CG for $binary.."
-      while ! opt -dot-callgraph $binary.0.0.*.bc >/dev/null 2> $TMPDIR/step${STEP}.log ; do
+      while ! opt-5.0 -dot-callgraph $binary.0.0.*.bc >/dev/null 2> $TMPDIR/step${STEP}.log ; do
         echo -e "\e[93;1m[!]\e[0m Could not generate call graph. Repeating.."
       done
 
@@ -78,7 +78,7 @@ if [ $RESUME -le $STEP ]; then
   else
 
     echo "($STEP) Constructing CG for $fuzzer.."
-    while ! opt -dot-callgraph $fuzzer.0.0.*.bc >/dev/null 2> $TMPDIR/step${STEP}.log ; do
+    while ! opt-5.0 -dot-callgraph $fuzzer.0.0.*.bc >/dev/null 2> $TMPDIR/step${STEP}.log ; do
       echo -e "\e[93;1m[!]\e[0m Could not generate call graph. Repeating.."
     done
 
@@ -94,44 +94,45 @@ next_step
 # Generate config file keeping distance information for code instrumentation
 #-------------------------------------------------------------------------------
 if [ $RESUME -le $STEP ]; then
-  echo "($STEP) Computing distance for call graph .."
+  # echo "($STEP) Computing distance for call graph .."
 
-  $AFLGO/distance.py -d $TMPDIR/dot-files/callgraph.dot -t $TMPDIR/Ftargets.txt -n $TMPDIR/Fnames.txt -o $TMPDIR/distance.callgraph.txt > $TMPDIR/step${STEP}.log 2>&1 || FAIL=1
+  # $AFLGO/distance.py -d $TMPDIR/dot-files/callgraph.dot -t $TMPDIR/Ftargets.txt -n $TMPDIR/Fnames.txt -o $TMPDIR/distance.callgraph.txt > $TMPDIR/step${STEP}.log 2>&1 || FAIL=1
 
-  if [ $(cat $TMPDIR/distance.callgraph.txt | wc -l) -eq 0 ]; then
-    FAIL=1
-    next_step
-  fi
+  # if [ $(cat $TMPDIR/distance.callgraph.txt | wc -l) -eq 0 ]; then
+  #   FAIL=1
+  #   next_step
+  # fi
 
   printf "($STEP) Computing distance for control-flow graphs "
   for f in $(ls -1d $TMPDIR/dot-files/cfg.*.dot); do
 
     # Skip CFGs of functions we are not calling
     if ! grep "$(basename $f | cut -d. -f2)" $TMPDIR/dot-files/callgraph.dot >/dev/null; then
-      printf "\nSkipping $f..\n"
+      printf "Skipping $f..\n"
       continue
     fi
 
-    printf "."
+    printf "=> $f\n"
 
     #Clean up duplicate lines and \" in labels (bug in Pydotplus)
     awk '!a[$0]++' $f > ${f}.smaller.dot
-    mv $f $f.bigger.dot
     mv $f.smaller.dot $f
     sed -i s/\\\\\"//g $f
     sed -i 's/\[.\"]//g' $f
     sed -i 's/\(^\s*[0-9a-zA-Z_]*\):[a-zA-Z0-9]*\( -> \)/\1\2/g' $f
 
     #Compute distance
-    $AFLGO/distance.py -d $f -t $TMPDIR/BBtargets.txt -n $TMPDIR/BBnames.txt -s $TMPDIR/BBcalls.txt -c $TMPDIR/distance.callgraph.txt -o ${f}.distances.txt >> $TMPDIR/step${STEP}.log 2>&1 #|| FAIL=1
+    $AFLGO/distance.py -d $f -t $TMPDIR/BBtargets.txt -n $TMPDIR/BBnames.txt -s $TMPDIR/BBcalls.txt -c $TMPDIR/distance.callgraph.txt -o ${f}.distances.txt  >> $TMPDIR/step${STEP}.log 2>&1 #|| FAIL=1
     if [ $? -ne 0 ]; then
       echo -e "\e[93;1m[!]\e[0m Could not calculate distance for $f."
     fi
     #if [ $FAIL -eq 1 ]; then
     #  next_step #Fail asap.
     #fi
+  sleep 1
   done
   echo ""
+
 
   cat $TMPDIR/dot-files/*.distances.txt > $TMPDIR/distance.cfg.txt
 
