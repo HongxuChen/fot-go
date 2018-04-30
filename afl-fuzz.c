@@ -65,9 +65,9 @@
 /* For systems that have sched_setaffinity; right now just Linux, but one
    can hope... */
 
-#ifdef __linux__
-#  define HAVE_AFFINITY 1
-#endif /* __linux__ */
+// #ifdef __linux__
+// #  define HAVE_AFFINITY 1
+// #endif /* __linux__ */
 
 /* A toggle to export some variables when building as a library. Not very
    useful for the general public. */
