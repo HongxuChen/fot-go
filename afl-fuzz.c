@@ -105,7 +105,8 @@ enum {
   /* 00 */ SAN_EXP,                   /* Exponential schedule             */
   /* 01 */ SAN_LOG,                   /* Logarithmical schedule           */
   /* 02 */ SAN_LIN,                   /* Linear schedule                  */
-  /* 03 */ SAN_QUAD                   /* Quadratic schedule               */
+  /* 03 */ SAN_QUAD,                  /* Quadratic schedule               */
+  /* 04 */ SAN_AFL,                   /* NO (same as AFL)                 */
 };
 
 EXP_ST u8  skip_deterministic,        /* Skip deterministic stages?       */
@@ -4180,6 +4181,8 @@ static void show_stats(void) {
     sprintf(tmp, "%s/%s (%0.02f%%)", DI(stage_cur), DI(stage_max),
             ((double)stage_cur) * 100 / stage_max);
 
+    // fprintf(stderr, "INSHOW: stage_cur=%d, stage_max=%d\n", stage_cur, stage_max);
+
   }
 
   SAYF(bV bSTOP " stage execs : " cRST "%-21s " bSTG bV bSTOP, tmp);
@@ -4815,24 +4818,31 @@ static u32 calculate_score(struct queue_entry* q) {
 
       break;
 
+    case SAN_AFL:
+      T = 1.0;
+      break;
+
     default:
       PFATAL ("Unkown Power Schedule for Directed Fuzzing");
   }
 
   double power_factor = 1.0;
-  if (q->distance > 0) {
 
-    double normalized_d = q->distance;
-    if (max_distance != min_distance)
-      normalized_d = (q->distance - min_distance) / (max_distance - min_distance);
+  if (cooling_schedule != SAN_AFL) {
+    if (q->distance > 0) {
 
-    if (normalized_d >= 0) {
+      double normalized_d = q->distance;
+      if (max_distance != min_distance)
+        normalized_d = (q->distance - min_distance) / (max_distance - min_distance);
 
-        double p = (1.0 - normalized_d) * (1.0 - T) + 0.5 * T;
-        power_factor = pow(2.0, 2.0 * (double) log2(MAX_FACTOR) * (p - 0.5));
+      if (normalized_d >= 0) {
 
-    }// else WARNF ("Normalized distance negative: %f", normalized_d);
+          double p = (1.0 - normalized_d) * (1.0 - T) + 0.5 * T;
+          power_factor = pow(2.0, 2.0 * (double) log2(MAX_FACTOR) * (p - 0.5));
 
+      }// else WARNF ("Normalized distance negative: %f", normalized_d);
+
+    }
   }
 
   perf_score *= power_factor;
@@ -6163,6 +6173,8 @@ havoc_stage:
     stage_max   = (doing_det ? HAVOC_CYCLES_INIT : HAVOC_CYCLES) *
                   perf_score / havoc_div / 100;
 
+    // fprintf(stderr, "HAVOC perf_score=%d, %d/%d\n", perf_score, stage_cur, stage_max);
+
   } else {
 
     static u8 tmp[32];
@@ -6173,6 +6185,8 @@ havoc_stage:
     stage_name  = tmp;
     stage_short = "splice";
     stage_max   = SPLICE_HAVOC * perf_score / havoc_div / 100;
+
+    // fprintf(stderr, "SPLICE perf_score=%d, %d/%d\n", perf_score, stage_cur, stage_max);
 
   }
 
@@ -6583,6 +6597,7 @@ havoc_stage:
     if (queued_paths != havoc_queued) {
 
       if (perf_score <= HAVOC_MAX_MULT * 100) {
+        // fprintf(stderr, "stage_max=%d, perf_score=%d\n", stage_max, perf_score);
         stage_max  *= 2;
         perf_score *= 2;
       }
@@ -7153,7 +7168,7 @@ static void usage(u8* argv0) {
        "Directed fuzzing specific settings:\n\n"
 
        "  -z schedule   - temperature-based power schedules\n"
-       "                  {exp, log, lin, quad} (Default: exp)\n"
+       "                  {exp, log, lin, quad, afl} (Default: exp)\n"
        "  -c min        - time from start when SA enters exploitation\n"
        "                  in secs (s), mins (m), hrs (h), or days (d)\n\n"
 
@@ -8010,6 +8025,9 @@ int main(int argc, char** argv) {
           cooling_schedule = SAN_LIN;
         else if (!stricmp(optarg, "quad"))
           cooling_schedule = SAN_QUAD;
+        else if (!stricmp(optarg, "afl"))
+          cooling_schedule = SAN_AFL;
+
         else
           PFATAL ("Unknown value for option -z");
 
