@@ -61,7 +61,7 @@ if [ $RESUME -le $STEP ]; then
     for binary in $(echo "$binaries"); do
 
       echo "($STEP) Constructing CG for $binary.."
-      while ! opt-5.0 -dot-callgraph $binary.0.0.*.bc >/dev/null 2> $TMPDIR/step${STEP}.log ; do
+      while ! opt-6.0 -dot-callgraph $binary.0.0.*.bc >/dev/null 2> $TMPDIR/step${STEP}.log ; do
         echo -e "\e[93;1m[!]\e[0m Could not generate call graph. Repeating.."
       done
 
@@ -78,7 +78,7 @@ if [ $RESUME -le $STEP ]; then
   else
 
     echo "($STEP) Constructing CG for $fuzzer.."
-    while ! opt-5.0 -dot-callgraph $fuzzer.0.0.*.bc >/dev/null 2> $TMPDIR/step${STEP}.log ; do
+    while ! opt-6.0 -dot-callgraph $fuzzer.0.0.*.bc >/dev/null 2> $TMPDIR/step${STEP}.log ; do
       echo -e "\e[93;1m[!]\e[0m Could not generate call graph. Repeating.."
     done
 
@@ -94,14 +94,14 @@ next_step
 # Generate config file keeping distance information for code instrumentation
 #-------------------------------------------------------------------------------
 if [ $RESUME -le $STEP ]; then
-  # echo "($STEP) Computing distance for call graph .."
+  echo "($STEP) Computing distance for call graph .."
 
-  # $AFLGO/distance.py -d $TMPDIR/dot-files/callgraph.dot -t $TMPDIR/Ftargets.txt -n $TMPDIR/Fnames.txt -o $TMPDIR/distance.callgraph.txt > $TMPDIR/step${STEP}.log 2>&1 || FAIL=1
+  $AFLGO/distance.py -d $TMPDIR/dot-files/callgraph.dot -t $TMPDIR/Ftargets.txt -n $TMPDIR/Fnames.txt -o $TMPDIR/distance.callgraph.txt > $TMPDIR/step${STEP}.log 2>&1 || FAIL=1
 
-  # if [ $(cat $TMPDIR/distance.callgraph.txt | wc -l) -eq 0 ]; then
-  #   FAIL=1
-  #   next_step
-  # fi
+  if [ $(cat $TMPDIR/distance.callgraph.txt | wc -l) -eq 0 ]; then
+    FAIL=1
+    next_step
+  fi
 
   printf "($STEP) Computing distance for control-flow graphs "
   for f in $(ls -1d $TMPDIR/dot-files/cfg.*.dot); do
